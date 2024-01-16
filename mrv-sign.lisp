@@ -1,13 +1,23 @@
-(defvar *mrv-sign* nil)
+(in-package :maxima)
 
+;;; Given a Maxima expression e and a variable x, return the sign of e in
+;;; a neighborhood of infinity. The sign is encoded as -1 for negative, 0
+;;; for zero, and 1 for positive. 
+
+;;; The function mrv-sign-helper returns 2 for an expression that is not bounded
+;;; above in a neighborhood of infinity and -2 for one that is not bounded below.
+;;; For bounded expressions it returns the sign encoded as -1 for negative, 0
+;;; for zero, and 1 for positive. 
+(defvar *mrv-sign* nil)
 
 ;; Do {neg, zero, pos} --> {-1,0,1}. For all other inputs, return nil
 (defun mrv-sign-to-number (sgn)
 	(cond ((eq sgn '$neg) -1)
 		  ((eq sgn '$zero) 0)
 		  ((eq sgn '$pos) 1)
-		  (t nil))) ; pn, pz, nz,pnz, complex, imaginary.
+		  (t nil))) ; pn, pz, nz, pnz, complex, imaginary.
 
+;; I think this isn't neeed. 
 (defun mrv-sign-mabs (e x)
 	(let ((sgn (mrv-sign-helper (cadr e) x)))
 		(cond ((eql sgn -2) 2) ;abs(minf) = inf
@@ -16,19 +26,21 @@
 			  ((eql sgn -1) 1) ;abs(neg) = inf
 			  ((eq t (mnqp 0 (cadr e))) 1) ; abs(nonzero) = pos
 			  (t (mrv-sign-to-number ($csign e))))))
-			    
+
 (defun mrv-sign-constant (e x)
 	(let ((sgn))
 	  (cond ((eq e '$minf) -2)
-	        ((eq e '$zerob) -1)
-	  	    ((eq e '$zeroa) 1)
+	        ((eq e '$zerob) -1) ;not sure needed--likely OK
+	  	    ((eq e '$zeroa) 1)  ;not sure needed--likely OK
 		    ((eq e '$inf) 2)
 		    ((or (eq e '$infinity) (eq e '$ind)  (eq e '$und)) nil)
 		    (t 
 		      (setq sgn ($csign ($radcan e))) ;not sure about the radcan
-			  ;; Do an asksign when sgn = pnz & e is freeof x
-		  	  (when (and (or t *getsignl-asksign-ok*) (eq sgn '$pnz) (freeof x e))
+			  ;; Do an asksign when sgn = pnz. Not sure about the 
+              ;; *getsignl-asksign-ok* flag.
+		  	  (when (and *getsignl-asksign-ok* (eq sgn '$pnz))
 				(setq sgn ($asksign e)))
+              ;; return -1, 0, or 1.
 			  (mrv-sign-to-number sgn)))))
 
 (defun mrv-sign-sum (e x)
@@ -43,14 +55,11 @@
 		((every #'(lambda (q) (>= 0 q)) ee) (apply #'min ee))
 		((and (every #'(lambda (q) (>= q -1)) ee) (member 2 ee :test #'eql))
 		 2)
-		
-		
-		;; see if csign can do it
+		;; Hope that csign can do it
 	    (t (mrv-sign-to-number ($csign e))))))
  
 (defun mrv-sign-product (e x)
   (let ((ee (mapcar #'(lambda (q) (mrv-sign-helper q x)) (cdr e))))
-  (mtell "e = ~M ~%" (cons '(mlist) ee))
   (cond
      ;; unable to find the sign of one term, dispatch csign on e.
 	 ((some #'null ee)
@@ -90,6 +99,9 @@
 	(and (consp e) (eq (caar e) 'mabs)))
 
 (defvar *missing-mrv* nil)
+
+;; Let ans = limit(e,x,inf). Then do 
+;;      {minf, negative, zero, pos,  inf} --> {-2, -1, 0, 1, 2}.
 (defun mrv-sign-helper (e x)
 	(cond ((freeof x e) (mrv-sign-constant e x))
 	      ((eq e x) 2)
@@ -102,7 +114,6 @@
 		  (t 
 		    (when (consp e)
 				(push (caar e) *missing-mrv*))
-		  
 		    (mrv-sign-to-number ($csign e)))))
 
 (defun $larry (e x)
