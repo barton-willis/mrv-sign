@@ -1,2 +1,3 @@
 # mrv-sign
- new implementation of Maxia function mrv-sign
+
+ This is new implementation of Maxima function mrv-sign
