@@ -62,7 +62,6 @@
 	    ;; unable to find the sign of one term, dispatch csign on e.
 		((some #'null ee)
 		  (mrv-sign-to-number ($csign e)))
-
         ;; at least one term is -2 and all other terms are finite; return -2
 		((and (every #'(lambda (q) (<= q 1)) ee) (member -2 ee :test #'eql))
 		 -2)
