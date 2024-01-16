@@ -56,6 +56,11 @@
           ;; convert sgn to a numerical code.
 		  (mrv-sign-to-number sgn)))))
 
+;; This code runs the testsuite OK, but it fails to find the mrv sign of 
+;; sums whose terms involve both minus infinity and infinite terms, for example
+;; log(x+1) - log(x). The original mrv-sign code dispatched limitinf on a 
+;; sum and then returned the mrv sign of that result. Maybe that's OK, but
+;; I worry about an infinite loop?
 (defun mrv-sign-sum (e x)
 	(let ((ee (mapcar #'(lambda (q) (mrv-sign-helper q x)) (cdr e))))
 	(cond 
