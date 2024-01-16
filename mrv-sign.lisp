@@ -61,8 +61,16 @@
 ;; log(x+1) - log(x). The original mrv-sign code dispatched limitinf on a 
 ;; sum and then returned the mrv sign of that result. Maybe that's OK, but
 ;; I worry about an infinite loop?
+
+;; The notorious Bug #3054 
+;;
+;; limit(exp(exp(2*log(x**5 + x)*log(log(x)))) / exp(exp(10*log(x)*log(log(x)))), x, inf)
+;;
+;; sends some expressions to mrv-sign-sum that this code does not handle.
+
 (defun mrv-sign-sum (e x)
 	(let ((ee (mapcar #'(lambda (q) (mrv-sign-helper q x)) (cdr e))))
+	(mtell "ee = ~M ~%" (cons '(mlist) ee))
 	(cond 
 	    ;; unable to find the sign of one term, dispatch csign on e.
 		((some #'null ee)
@@ -71,7 +79,7 @@
 		((and (every #'(lambda (q) (<= q 1)) ee) (member -2 ee :test #'eql))
 		 -2)
          ;; at least one term is 2 and all other terms are finite; return 2
-		((and (every #'(lambda (q) (<= -1 q)) ee) (member - ee :test #'eql))
+		((and (every #'(lambda (q) (<= -1 q)) ee) (member 2 ee :test #'eql))
 		 2) 	  
 	    ;; every term of e is nonnegative, return 1 for postive & 2 for inf
 	    ((every #'(lambda (q) (>= q 0)) ee) (apply #'max ee))
@@ -79,9 +87,40 @@
 		((every #'(lambda (q) (>= 0 q)) ee) (apply #'min ee))
 		((and (every #'(lambda (q) (>= q -1)) ee) (member 2 ee :test #'eql))
 		 2)
-		;; Hope that csign can do it
-	    (t (mrv-sign-to-number ($csign e))))))
- 
+	    (t (mrv-indeterminate-sum e x)))))
+
+(defun mrv-indeterminate-sum (e x)	
+    (let ((minf-term 0) (inf-term 0) (finite-term 0) (failed-term 0) (q) (qq) (ans))
+	(setq e (cdr e))
+	(dolist (q e)
+		(setq ans (mrv-sign-helper q x))
+		(cond ((eql -2 ans) (setq minf-term (add minf-term q)))
+		      ((eql 2 ans) (setq inf-term (add inf-term q)))
+			  ((eq nil ans) (setq failed-term (add failed-term q)))
+			  (t (setq finite-term (add finite-term q)))))
+
+	(mtell "a = ~M ; b = ~M ; c = ~M ~%" minf-term inf-term failed-term)
+
+	(cond ((and (eql 0 failed-term) (not (eql 0 minf-term)) (not (eql inf-term 0)))
+	       (setq q ($limit (div inf-term (mul -1 minf-term)) x '$inf))
+		   (mtell "q = ~M ~%" q)
+		   (cond ((eq t (mgrp q 1)) 2)
+		         ((eq t (mgrp 1 q)) -2)
+				 ((eql q 1)
+				      ;; OK this needs some attention!
+                      (setq qq ($radcan (sub (div inf-term (mul -1 minf-term)) 1)))
+		              (setq qq (let (($taylordepth 16)) ($taylor qq x '$inf 16)))
+					  (setq qq (sratsimp ($first ($expand qq))))
+					  (mtell "qq = ~M ~%" qq)
+		              (setq qq (mrv-sign qq x))
+					  (mtell "qq = ~M ~%" qq)
+					  qq)
+				 (t nil)))
+		  
+		  (t 
+		   	;; Hope that csign can do it!
+	        (mrv-sign-to-number ($csign e))))))
+
 (defun mrv-sign-product (e x)
   (let ((ee (mapcar #'(lambda (q) (mrv-sign-helper q x)) (cdr e))))
   (cond
