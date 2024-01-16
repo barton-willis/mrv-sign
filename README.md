@@ -12,7 +12,7 @@
 This is a long-standing bug--the kill(a) is needed. */
 block([L1,L2,L3,L4,L5,L6], 
    kill(a),
-   assume(a > 0),
+   assume(a > 0), /* added */
    L1 :limit(a*inf-inf),
    L2 : limit((a-1)*inf),
    forget(a > 1),
