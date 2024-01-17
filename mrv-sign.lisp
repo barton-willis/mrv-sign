@@ -7,17 +7,19 @@
 
 ;; The limit code makes an assumption that x > *large-positive-number* before
 ;; this code is called. This assumption is made in a new super context, so 
-;; it's OK for this code to make new assumptions (but currently it does not).
-;; The limit code eventually kills the super context.
+;; it's OK for this code to make new assumptions, as the limit code eventually 
+;; kills the super context, deleting the new assumptions.
 
-;; The function mrv-sign-helper extend the mrv-sign of an expression. It returns 
+;; The function mrv-sign-helper extends the mrv-sign of an expression. It returns 
 ;; 2 for an expression that is not bounded above in a neighborhood of infinity 
-;; and -2 for one that is  not bounded below. For bounded expressions it returns 
+;; and -2 for one that is  not bounded below. For bounded expressions, it returns 
 ;; the sign encoded as -1 for negative, 0 for zero, and 1 for positive. This is 
 ;; the extended mrv-sign.
 
 ;; For debugging, the global *mrv-sign* is a list of expressions that this code
-;; was not able to do.
+;; was not able to do. After running the testsuite, it's informatitive to examine
+;; the list *mrv-sign*
+
 (defvar *mrv-sign* nil)
 
 ;; Do {neg, zero, pos} --> {-1,0,1}. For all other inputs, return nil
@@ -89,6 +91,8 @@
 		 2)
 	    (t (mrv-indeterminate-sum e x)))))
 
+;; OK, once this function is polished, I should blend it with mrv-sign-sum. Currently,
+;; calling both is inefficient.
 (defun mrv-indeterminate-sum (e x)	
     (let ((minf-term 0) (inf-term 0) (finite-term 0) (failed-term 0) (q) (qq) (ans))
 	(setq e (cdr e))
@@ -152,6 +156,8 @@
 	  ;; for all other cases, dispatch csign
 	  (t (mrv-sign-to-number ($csign e))))))
 
+;; For debugging, build a list *missing-mrv* of all operator that mrv-sign-helper
+;; encounters but doesn't know how to handle.
 (defvar *missing-mrv* nil)
 ;; Let ans = limit(e,x,inf). Then do 
 ;;      {minf, negative, zero, pos,  inf} --> {-2, -1, 0, 1, 2}.
@@ -181,6 +187,7 @@
 	 ; 	(setq sgn -2))
     ; (when (alike1 e (mul (sub 1 (ftake '%log x)) (ftake '%log x)))
 	 ; 	(setq sgn -2))
+	  ;; For now, do an fake asksign on expressions the code cannot handle.
 	  (when (and (null sgn) (eq '$pnz ($csign e)))
 	    (push (ftake 'mlist e x sgn ($csign e)) *mrv-sign*)
 	    (mtell "Enter sign (either -1,0,or 1) of ~M ~%" e)
