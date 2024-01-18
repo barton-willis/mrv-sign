@@ -1,10 +1,11 @@
 # mrv-sign
 
- This is new implementation of Maxima function mrv-sign. This code is used by the Gruntz method for computing limits. The hope is that this implementation will fix some bugs and will extend the set of cases the limit can handle.
+ This is new implementation of Maxima function mrv-sign. This code is used by the Gruntz method for computing limits. The hope is that this implementation will fix some bugs and will extend the set of cases the limit can handle. There are no user-level functions in this code.
 
- There are no user-level functions in this code.
+ The tests in rtest_gruntz are translationed from the SymPY tests. For the 
+ copyright and license for these tests see the LICENSE. I thank the SymPY developers for making this resource available. 
 
- To run the testsuite without stopping, I had to insert a call to assume to one test in `rtest_limit` to avoid an asksign.
+ To run the testsuite without stopping, I had to insert a call to assume to one test in `rtest_limit` to avoid an asksign. The modified test is
 
  ~~~
 /* 1-arg limit: limit(a*inf-inf) => minf - ID: 1385306 

@@ -1,0 +1,329 @@
+
+/* Maxima error log from tests in C:/Users/willisb/Documents/GitHub/mrv-sign/mrv-sign/rtest_gruntz.mac */
+
+/* Problem 6 (line 60) */
+gruntz(exp(x)*(exp(1/x-exp(-x))-exp(1/x)),x,inf);
+/* Erroneous Result?:
+gruntz(%e^x*(%e^(1/x-%e^-x)-%e^(1/x)),x,inf) */ 
+/* Expected result: */
+-1;
+
+/* Problem 7 (line 63) */
+gruntz(exp(x)*(exp(1/x+exp(-x)+exp(-x^2))-exp(1/x-exp(-exp(x)))),x,inf);
+/* Erroneous Result?:
+gruntz(%e^x*(%e^(%e^-x^2+%e^-x+1/x)-%e^(1/x-%e^-%e^x)),x,inf) */ 
+/* Expected result: */
+1;
+
+/* Problem 15 (line 88) */
+gruntz((exp((x*exp(-x))/(exp(-x)+exp((-2*x^2)/(x+1))))-exp(x))/x,x,inf);
+/* Erroneous Result?:
+gruntz((%e^((x*%e^-x)/(%e^-((2*x^2)/(x+1))+%e^-x))-%e^x)/x,x,inf) */ 
+/* Expected result: */
+-exp(2);
+
+/* Problem 16 (line 91) */
+gruntz((3^x+5^x)^(1/x),x,inf);
+/* Erroneous Result?:
+gruntz((5^x+3^x)^(1/x),x,inf) */ 
+/* Expected result: */
+5;
+
+/* Problem 19 (line 101) */
+gruntz(%e^(8*%e^((54*x^(49/45))/17+(21*x^(6/11))/8+5/(2*x^(5/7))+2/x^8))
+        /log(log(-log(4/(3*x^(5/14)))))^(7/6),x,inf);
+/* Erroneous Result?:
+gruntz(%e^(8*%e^((54*x^(49/45))/17+(21*x^(6/11))/8+5/(2*x^(5/7))+2/x^8))
+        /log(log(-log(4/(3*x^(5/14)))))^(7/6),x,inf) */ 
+/* Expected result: */
+inf;
+
+/* Problem 20 (line 104) */
+gruntz((exp((4*x*exp(-x))/(1/exp(x)+1/exp((2*x^2)/(x+1))))-exp(x))/exp(x)^4,x,
+       inf);
+/* Erroneous Result?:
+gruntz(%e^-(4*x)*(%e^((4*x*%e^-x)/(%e^-((2*x^2)/(x+1))+%e^-x))-%e^x),x,inf) */ 
+/* Expected result: */
+1;
+
+/* Problem 23 (line 114) */
+gruntz(exp(log(log(x+exp(log(x)*log(log(x)))))
+            /log(log(log(exp(x)+x+log(x))))),x,inf);
+/* Erroneous Result?:
+1 */ 
+/* Expected result: */
+%e;
+
+/* Problem 28 (line 130) */
+gruntz((erf(x-exp(-exp(x)))-erf(x))*exp(exp(x))*exp(x^2),x,inf);
+/* Erroneous Result?:
+gruntz(%e^(%e^x+x^2)*(-erf(%e^-%e^x-x)-erf(x)),x,inf) */ 
+/* Expected result: */
+2/sqrt(%pi);
+
+/* Problem 29 (line 133) */
+gruntz(exp(exp(x))*(exp(sin(1/x+exp(-exp(x))))-exp(sin(1/x))),x,inf);
+/* Erroneous Result?:
+gruntz(%e^%e^x*(%e^sin(%e^-%e^x+1/x)-%e^sin(1/x)),x,inf) */ 
+/* Expected result: */
+1;
+
+/* Problem 30 (line 136) */
+gruntz(exp(x)*(gamma(x+exp(-x))-gamma(x)),x,inf);
+/* Erroneous Result?:
+gruntz(%e^x*(gamma(%e^-x+x)-gamma(x)),x,inf) */ 
+/* Expected result: */
+inf;
+
+/* Problem 31 (line 139) */
+gruntz(exp(exp(digamma(digamma(x))))/x,x,inf);
+/* Erroneous Result?:
+gruntz(%e^%e^digamma(digamma(x))/x,x,inf) */ 
+/* Expected result: */
+exp(-1/2);
+
+/* Problem 32 (line 142) */
+gruntz(exp(exp(digamma(log(x))))/x,x,inf);
+/* Erroneous Result?:
+gruntz(%e^%e^digamma(log(x))/x,x,inf) */ 
+/* Expected result: */
+exp(-1/2);
+
+/* Problem 33 (line 145) */
+gruntz(digamma(digamma(digamma(x))),x,inf);
+/* Erroneous Result?:
+gruntz(digamma(digamma(digamma(x))),x,inf) */ 
+/* Expected result: */
+inf;
+
+/* Problem 34 (line 148) */
+gruntz(loggamma(loggamma(x)),x,inf);
+/* Erroneous Result?:
+gruntz(loggamma(loggamma(x)),x,inf) */ 
+/* Expected result: */
+inf;
+
+/* Problem 35 (line 151) */
+gruntz(((gamma(x+1/gamma(x))-gamma(x))/log(x)-cos(1/x))*x*log(x),x,inf);
+/* Erroneous Result?:
+gruntz(x*log(x)*((gamma(1/gamma(x)+x)-gamma(x))/log(x)-cos(1/x)),x,inf) */ 
+/* Expected result: */
+-1/2;
+
+/* Problem 36 (line 154) */
+gruntz(x*(gamma(x-1/gamma(x))-gamma(x)+log(x)),x,inf);
+/* Erroneous Result?:
+gruntz(x*(gamma(x-1/gamma(x))+log(x)-gamma(x)),x,inf) */ 
+/* Expected result: */
+1/2;
+
+/* Problem 37 (line 157) */
+gruntz((gamma(x+1/gamma(x))-gamma(x))/log(x),x,inf);
+/* Erroneous Result?:
+gruntz((gamma(1/gamma(x)+x)-gamma(x))/log(x),x,inf) */ 
+/* Expected result: */
+1;
+
+/* Problem 38 (line 160) */
+gruntz(gamma(x+1)/sqrt(2*%pi)-exp(-x)*(x^(x+1/2)+x^(x-(1/2)/12)),x,inf);
+/* Erroneous Result?:
+minf */ 
+/* Expected result: */
+inf;
+
+/* Problem 39 (line 163) */
+gruntz(gamma(x+1)/sqrt(2*%pi)-exp(-x)*(x^(x+1/2)+x^(x-1/2)/12),x,inf);
+/* Erroneous Result?:
+minf */ 
+/* Expected result: */
+inf;
+
+/* Problem 40 (line 166) */
+gruntz(exp(exp(exp(digamma(digamma(digamma(x))))))/x,x,inf);
+/* Erroneous Result?:
+gruntz(%e^%e^%e^digamma(digamma(digamma(x)))/x,x,inf) */ 
+/* Expected result: */
+0;
+
+/* Problem 41 (line 169) */
+gruntz(exp(gamma(x-exp(-x))*exp(1/x))-exp(gamma(x)),x,inf);
+/* Erroneous Result?:
+gruntz(%e^(%e^(1/x)*gamma(x-%e^-x))-%e^gamma(x),x,inf) */ 
+/* Expected result: */
+inf;
+
+/* Problem 42 (line 172) */
+gruntz((Ei(x-exp(-exp(x)))-Ei(x))*exp(-x)*exp(exp(x))*x,x,inf);
+/* Erroneous Result?:
+gruntz(x*%e^(%e^x-x)*(Ei(x-%e^-%e^x)-Ei(x)),x,inf) */ 
+/* Expected result: */
+-1;
+
+/* Problem 43 (line 175) */
+gruntz(exp((log(2)+1)*x)*(zeta(x+exp(-x))-zeta(x)),x,inf);
+/* Erroneous Result?:
+gruntz(%e^((log(2)+1)*x)*(zeta(%e^-x+x)-zeta(x)),x,inf) */ 
+/* Expected result: */
+-log(2);
+
+/* Problem 44 (line 178) */
+gruntz(cosh(x),x,inf);
+/* Erroneous Result?:
+gruntz(cosh(x),x,inf) */ 
+/* Expected result: */
+inf;
+
+/* Problem 45 (line 181) */
+gruntz(cosh(x),x,minf);
+/* Erroneous Result?:
+gruntz(cosh(x),x,minf) */ 
+/* Expected result: */
+inf;
+
+/* Problem 46 (line 184) */
+gruntz(sinh(x),x,inf);
+/* Erroneous Result?:
+gruntz(sinh(x),x,inf) */ 
+/* Expected result: */
+inf;
+
+/* Problem 47 (line 187) */
+gruntz(sinh(x),x,minf);
+/* Erroneous Result?:
+gruntz(sinh(x),x,minf) */ 
+/* Expected result: */
+minf;
+
+/* Problem 49 (line 193) */
+gruntz(2*cosh(x)*exp(x),x,minf);
+/* Erroneous Result?:
+0 */ 
+/* Expected result: */
+1;
+
+/* Problem 51 (line 199) */
+gruntz(2*sinh(x)*exp(x),x,minf);
+/* Erroneous Result?:
+0 */ 
+/* Expected result: */
+-1;
+
+/* Problem 52 (line 202) */
+gruntz(tanh(x),x,inf);
+/* Erroneous Result?:
+gruntz(tanh(x),x,inf) */ 
+/* Expected result: */
+1;
+
+/* Problem 53 (line 205) */
+gruntz(tanh(x),x,minf);
+/* Erroneous Result?:
+gruntz(tanh(x),x,minf) */ 
+/* Expected result: */
+-1;
+
+/* Problem 54 (line 208) */
+gruntz(coth(x),x,inf);
+/* Erroneous Result?:
+gruntz(coth(x),x,inf) */ 
+/* Expected result: */
+1;
+
+/* Problem 55 (line 211) */
+gruntz(coth(x),x,minf);
+/* Erroneous Result?:
+gruntz(coth(x),x,minf) */ 
+/* Expected result: */
+-1;
+
+/* Problem 80 (line 286) */
+gruntz((3^x+5^x)^(1/x),x,inf);
+/* Erroneous Result?:
+gruntz((5^x+3^x)^(1/x),x,inf) */ 
+/* Expected result: */
+5;
+
+/* Problem 81 (line 289) */
+gruntz((3^(1/x)+5^(1/x))^x,x,0,'plus);
+/* Erroneous Result?:
+gruntz((5^(1/x)+3^(1/x))^x,x,0,plus) */ 
+/* Expected result: */
+5;
+
+/* Problem 82 (line 292) */
+gruntz((x+1)^(1/log(x+1)),x,inf);
+/* Erroneous Result?:
+gruntz((x+1)^(1/log(x+1)),x,inf) */ 
+/* Expected result: */
+%e;
+
+/* Problem 83 (line 295) */
+gruntz(1/gamma(x),x,inf);
+/* Erroneous Result?:
+gruntz(1/gamma(x),x,inf) */ 
+/* Expected result: */
+0;
+
+/* Problem 84 (line 298) */
+gruntz(1/loggamma(x),x,inf);
+/* Erroneous Result?:
+gruntz(1/loggamma(x),x,inf) */ 
+/* Expected result: */
+0;
+
+/* Problem 85 (line 301) */
+gruntz(gamma(x)/loggamma(x),x,inf);
+/* Erroneous Result?:
+gruntz(gamma(x)/loggamma(x),x,inf) */ 
+/* Expected result: */
+inf;
+
+/* Problem 86 (line 304) */
+gruntz(exp(gamma(x))/gamma(x),x,inf);
+/* Erroneous Result?:
+gruntz(%e^gamma(x)/gamma(x),x,inf) */ 
+/* Expected result: */
+inf;
+
+/* Problem 88 (line 310) */
+gruntz(gamma(1/7+1/x),x,inf);
+/* Erroneous Result?:
+gruntz(gamma(1/x+1/7),x,inf) */ 
+/* Expected result: */
+gamma(1/7);
+
+/* Problem 89 (line 313) */
+gruntz(log(x^x)/log(gamma(x)),x,inf);
+/* Erroneous Result?:
+gruntz((x*log(x))/log(gamma(x)),x,inf) */ 
+/* Expected result: */
+1;
+
+/* Problem 90 (line 316) */
+gruntz(log(gamma(gamma(x)))/exp(x),x,inf);
+/* Erroneous Result?:
+0 */ 
+/* Expected result: */
+inf;
+
+/* Problem 94 (line 328) */
+gruntz(((x^7+x+1)/(2^x+x^2))^(-1/x),x,inf);
+/* Erroneous Result?:
+gruntz((2^x+x^2)^(1/x)/(x^7+x+1)^(1/x),x,inf) */ 
+/* Expected result: */
+2;
+
+/* Problem 100 (line 363) */
+gruntz(exp(2*Ei(-x))/x^2,x,0,plus);
+/* Erroneous Result?:
+gruntz(%e^(2*Ei(-x))/x^2,x,0,plus) */ 
+/* Expected result: */
+exp(2*%gamma);
+
+/* Problem 101 (line 366) */
+gruntz(x^-%pi,x,0,'minus);
+/* Erroneous Result?:
+gruntz(1/x^%pi,x,0,minus) */ 
+/* Expected result: */
+infinity;
+
