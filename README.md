@@ -1,6 +1,6 @@
 # mrv-sign
 
- This is new implementation of Maxima function mrv-sign that is used by Gruntz code. The hope is that this revised mrv-sign function will fix some bugs and will extend the set of cases the Gruntz code can handle. There are no user-level functions in mrv-sign.lisp. Presumably, when this code is polished, it will be
+ This is a new implementation of the Maxima function mrv-sign that is used by Gruntz code. The hope is that this revised mrv-sign function will fix some bugs and extend the set of cases the Gruntz code can handle. There are no user-level functions in mrv-sign.lisp. Presumably, when this code is polished, it will be
  blended into the Maxima source.
 
  The file rtest_gruntz is translated to Maxima from the SymPy tests (Copyright (c) 2006-2023 SymPy Development Team). For the
