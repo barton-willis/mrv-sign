@@ -157,7 +157,7 @@
 ;; Return the extended mrv sign of an expression. To do this, the code
 ;; examines the operator of the expression and dispatches the appropriate function.
 
-;; For debugging, build a list *missing-mrv-operator* of all operator that 
+;; For debugging, build a list *missing-mrv-operator* of all operators that 
 ;; mrv-sign-helper encounters but doesn't know how to handle. Currently 
 ;; running the testsuite + the share testsuite does not reveal any missing 
 ;; operators.
