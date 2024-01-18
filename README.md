@@ -10,6 +10,7 @@
  To test this code, place the file mrv-sign.lisp in a folder that Maxima can find and
  load the file from a Maxima command line. 
  
- This version of mrv-sign seems to fix the notorious Bug 3054 (https://sourceforge.net/p/maxima/bugs/3054/) for Maxima compiled with Clozure CL (1.12.2), but _not_ with Maxima compiled with SBCL (2.2.2). If you test this code with other 
- versions of Common Lisp, please let me know what you discover.
+This version of mrv-sign seems to fix the notorious Bug 3054 (https://sourceforge.net/p/maxima/bugs/3054/) for Maxima compiled with Clozure CL (1.12.2), but _not_ with Maxima compiled with SBCL (2.2.2).  For Maxima compiled with SBCL, Maxima will compute the limit correctly three times, but on the fourth time, the result is a Lisp error. For the fifth and subsequent tries, the limit is evaluated correctly. Using Maxima compiled with Clozure CL, repeated evaluations of this limit are OK.
+ 
+ If you test this code with other versions of Common Lisp, please let me know what you discover.
 
