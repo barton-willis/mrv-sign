@@ -195,7 +195,9 @@
 ;; For debugging, build a list *missing-mrv-operator* of all operators that 
 ;; mrv-sign-helper encounters but doesn't know how to handle. Currently 
 ;; running the testsuite + the share testsuite does not reveal any missing 
-;; operators.
+;; operators. If the list of operators grows, maybe I should put the 
+;; various sign functions in a hashtable and dispatch by lookup. It seems
+;; that mrv-sign-helper encounters a nounform sinh expression?
 (defvar *missing-mrv-operator* nil)
 
 (defun mrv-sign-helper (e x)
@@ -207,7 +209,7 @@
 		  ((mlogp e) (mrv-sign-log e x))
 		  ((atanp e) (mvr-sign-atan e x))
 		  ((coshp e) (mrv-sign-cosh e x))
-		  ((sinhp e) (mrv-sign-sinh e x))
+		  ((sinhp e) (mvr-sign-sinh e x))
 		  ((sinp e) (mrv-sign-sin e x))
 		  (t 
 		    (when (consp e)
@@ -224,3 +226,41 @@
      ;; When sgn is null, throw to taylor-catch; otherwise	 
 	 ;; map {-2,-1,0,1,2} --> {-1,-1,0,1,1}.
 	 (if (null sgn) (throw 'taylor-catch nil) (max -1 (min 1 sgn)))))
+
+;; The function gruntz1 standardizes the limit point to inf and the limit variable
+;; to a gensym. Since the limit point is possibly altered by this function, we
+;; need to make the appropriate assumptions on the limit variable. This is done
+;; in a supcontext.
+(defun gruntz1 (exp var val &rest rest)
+  (cond ((> (length rest) 1)
+	 (merror (intl:gettext "gruntz: too many arguments; expected just 3 or 4"))))
+  (let (($logexpand t) ; gruntz needs $logexpand T
+        (newvar (gensym "w"))
+	(dir (car rest)))
+	(putprop newvar t 'internal); keep var from appearing in questions to user	
+    (cond ((eq val '$inf)
+	   (setq exp (maxima-substitute newvar var exp)))
+	  ((eq val '$minf)
+	   (setq exp (maxima-substitute (m* -1 newvar) var exp)))
+	  ((eq val '$zeroa)
+	   (setq exp (maxima-substitute (m// 1 newvar) var exp)))
+	  ((eq val '$zerob)
+	   (setq exp (maxima-substitute (m// -1 newvar) var exp)))
+	  ((eq dir '$plus)
+	   (setq exp (maxima-substitute (m+ val (m// 1 newvar)) var exp)))
+	  ((eq dir '$minus)
+	   (setq exp (maxima-substitute (m+ val (m// -1 newvar)) var exp)))
+	  (t (merror (intl:gettext "gruntz: direction must be 'plus' or 'minus'; found: ~M") dir)))
+	  (let ((cx ($supcontext)))
+	   	    (unwind-protect
+ 	         (progn
+				  (mfuncall '$assume (ftake 'mlessp *large-positive-number* newvar)) ; *large-positive-number* < newvar
+                  (mfuncall '$assume (ftake 'mlessp 0 'lim-epsilon)) ; 0 < lim-epsilon
+				  (mfuncall '$assume (ftake 'mlessp *large-positive-number* 'prin-inf)) ; *large-positive-number* < prin-inf
+				  (mfuncall '$activate cx) ;not sure this is needed, but OK	
+				  (setq exp (resimplify exp)) ;simplify in new context
+                  (setq exp (let ((var newvar)) 
+				    (declare (special var)) 
+				    (resimp-extra-simp (sratsimp exp)))) ;additional simplifications
+				  (limitinf exp newvar)) ;compute & return limit
+			($killcontext cx))))) ;kill context & forget all new facts.	 
