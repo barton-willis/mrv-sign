@@ -163,6 +163,32 @@
 (defun mvr-sign-atan (e x)
   (mrv-sign-helper (cadr e) x))
 
+(defun sinhp (e)
+  (and (consp e) (or (eq '%sinh (caar e))  (eq '$sinh (caar e)))))
+
+(defun mvr-sign-sinh (e x)
+  (mrv-sign-helper (cadr e) x))
+
+(defun sinp (e)
+	(and (consp e) (eq '%sin (caar e))))
+
+(defun mrv-sign-sin (e x)
+	(let ((sgn (mrv-sign-helper (div 1 (cadr e)) x)))
+		(cond ((eql sgn 2) 1)
+		      ((eql sgn -2) -1)
+			  (t nil))))
+
+(defun coshp (e)
+	(and (consp e) (eq '%cosh (caar e))))
+
+;; Wrong when e = cosh(X) and X isn't real?
+(defun mrv-sign-cosh (e x)
+  (let ((sgn (mrv-sign-helper (cadr e) x))) ;e = cosh(X)
+  (cond ((eql sgn -2) 2) ;cosh(-minf) = inf
+        ((eql sgn 2) 2) ;cosh(inf) = inf
+		(t 1)))) ; range(cosh) = [1,inf]
+
+
 ;; Return the extended mrv sign of an expression. To do this, the code
 ;; examines the operator of the expression and dispatches the appropriate function.
 
@@ -180,6 +206,9 @@
 		  ((mexptp e) (mvr-sign-mexpt e x))
 		  ((mlogp e) (mrv-sign-log e x))
 		  ((atanp e) (mvr-sign-atan e x))
+		  ((coshp e) (mrv-sign-cosh e x))
+		  ((sinhp e) (mrv-sign-sinh e x))
+		  ((sinp e) (mrv-sign-sin e x))
 		  (t 
 		    (when (consp e)
 				(push (caar e) *missing-mrv-operator*))
