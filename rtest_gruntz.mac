@@ -141,16 +141,16 @@ gruntz(exp(exp(x)) * (exp(sin(1/x + exp(-exp(x)))) - exp(sin(1/x))),x, inf);
 gruntz(exp(x)*(gamma(x + exp(-x)) - gamma(x)), x, inf);
 inf$
 
-gruntz(exp(exp(digamma(digamma(x))))/x, x, inf);
+gruntz(exp(exp(psi[0](psi[0](x))))/x, x, inf);
 exp(-1/2)$
 
-gruntz(exp(exp(digamma(log(x))))/x, x, inf);
+gruntz(exp(exp(psi[0](log(x))))/x, x, inf);
 exp(-1/2)$
 
-gruntz(digamma(digamma(digamma(x))), x, inf);
+gruntz(psi[0](psi[0](psi[0](x))), x, inf);
 inf$
 
-gruntz(loggamma(loggamma(x)), x, inf);
+gruntz(log_gamma(log_gamma(x)), x, inf);
 inf$
 
 gruntz(((gamma(x + 1/gamma(x)) - gamma(x))/log(x) - cos(1/x))* x*log(x), x, inf);
@@ -168,13 +168,13 @@ inf$
 gruntz(gamma(x + 1)/sqrt(2*%pi) - exp(-x)*(x^(x + 1/2) + x^(x - 1/2)/12), x, inf);
 inf$
 
-gruntz(exp(exp(exp(digamma(digamma(digamma(x))))))/x, x, inf);
+gruntz(exp(exp(exp(psi[0](psi[0](psi[0](x))))))/x, x, inf);
 0$
 
 gruntz(exp(gamma(x - exp(-x))*exp(1/x)) - exp(gamma(x)), x, inf);
 inf$
 
-gruntz((Ei(x - exp(-exp(x))) - Ei(x)) *exp(-x)*exp(exp(x))*x, x, inf);
+gruntz((expintegral_ei(x - exp(-exp(x))) - expintegral_ei(x)) *exp(-x)*exp(exp(x))*x, x, inf);
 -1$
 
 gruntz(exp((log(2) + 1)*x) * (zeta(x + exp(-x)) - zeta(x)), x, inf);
@@ -300,10 +300,10 @@ gruntz((x + 1)^(1/log(x + 1)), x, inf);
 gruntz(1/gamma(x), x, inf);
 0$
 
-gruntz(1/loggamma(x), x, inf);
+gruntz(1/log_gamma(x), x, inf);
 0$
 
-gruntz(gamma(x)/loggamma(x), x, inf);
+gruntz(gamma(x)/log_gamma(x), x, inf);
 inf$
 
 gruntz(exp(gamma(x))/gamma(x), x, inf);
@@ -365,7 +365,7 @@ gruntz(1/gamma(x), x, 0,plus);
 gruntz(x*gamma(x), x, 0,plus);
 1$
 
-gruntz(exp(2*Ei(-x))/x^2, x, 0,plus);
+gruntz(exp(2*expintegral_ei(-x))/x^2, x, 0,plus);
 exp(2*%gamma)$
 
 gruntz(x^(-%pi), x, 0, 'minus);
