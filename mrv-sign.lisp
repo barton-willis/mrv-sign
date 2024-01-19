@@ -103,11 +103,17 @@
 		   (cond ((eq t (mgrp q 1)) 2)
 		         ((eq t (mgrp 1 q)) -2)
 				 ((eql q 1)
-				      ;; OK this needs some attention!
-                      (setq qq ($radcan (sub (div inf-term (mul -1 minf-term)) 1)))
-					  ;; We should examine the output of taylor and to attempt
-					  ;; to decide if the number of terms is sufficient.
-		              (setq qq (let (($taylordepth 16)) ($taylor qq x '$inf 16)))
+				      ;; The call to sratsimp is needed for one rtest_gruntz test.
+					  (setq qq (sratsimp (sub (div inf-term (mul -1 minf-term)) 1)))
+					  ;; The function tlimit-taylor iterates on the taylor order
+					  ;; until the result is nonzero. The last argument (here 3) 
+					  ;; stops the after quadrupling the order three times. When
+					  ;; tlimit-taylor fails to find the leading term, throw an 
+					  ;; error to taylor-catch
+					  (setq qq (tlimit-taylor qq x '$inf 1 3)) ;16 1
+					  (when (null qq)
+					    (throw 'taylor-catch nil))
+					  ;; I'm not sure this always returns the leading order?
 					  (setq qq (sratsimp ($first ($expand qq))))
 		              (setq qq (mrv-sign qq x))
 					  qq)
