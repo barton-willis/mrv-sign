@@ -185,10 +185,6 @@
 				(push (caar e) *missing-mrv-operator*))
 		    (mrv-sign-to-number ($csign e)))))
 
-;; Only for testing!
-(defun $larry (e x)
-	(mrv-sign e x))
-
 (defun mrv-sign (e x)
 	(let ((sgn (mrv-sign-helper e x)))
 	  ;; For now, do a fake asksign on expressions the code cannot handle.
