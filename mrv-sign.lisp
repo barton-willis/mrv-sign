@@ -26,7 +26,7 @@
 	(cond ((eq sgn '$neg) -1)
 		  ((eq sgn '$zero) 0)
 		  ((eq sgn '$pos) 1)
-		  (t nil))) ; pn, pz, nz, pnz, complex, or imaginary.
+		  (t (throw 'taylor-catch nil)))) ; pn, pz, nz, pnz, complex, or imaginary.
 
 ;; Return the mrv-sign of an expression that is free of the variable x.
 ;; Unfortunately, the limit problem limit(ind*inf) makes its way to the gruntz 
@@ -81,10 +81,10 @@
 		((every #'(lambda (q) (>= 0 q)) ee) (apply #'min ee))
 		((and (every #'(lambda (q) (>= q -1)) ee) (member 2 ee :test #'eql))
 		 2)
-	    (t (mrv-indeterminate-sum e x)))))
+		(t (mrv-indeterminate-sum e x)))))
 
 ;; OK, once this function is polished, I should blend it with mrv-sign-sum. 
-;; Calling both mrv-sign-sum and  mrv-indeterminate-sum is inefficient.
+;; Calling both mrv-sign-sum and mrv-indeterminate-sum is inefficient.
 (defun mrv-indeterminate-sum (e x)	
     (let ((minf-term 0) (inf-term 0) (finite-term 0) (failed-term 0) (q) (qq) (ans))
 	(setq e (cdr e))
@@ -96,8 +96,7 @@
 			  (t (setq finite-term (add finite-term q)))))
 
 	(cond ((and (eql 0 failed-term) (not (eql 0 minf-term)) (not (eql inf-term 0)))
-	       (setq q ($limit (div inf-term (mul -1 minf-term)) x '$inf))
-		   ;(mtell "q = ~M ~%" q)
+	       (setq q ($gruntz (div inf-term (mul -1 minf-term)) x '$inf))
 		   (cond ((eq t (mgrp q 1)) 2)
 		         ((eq t (mgrp 1 q)) -2)
 				 ((eql q 1)
@@ -107,9 +106,7 @@
 					  ;; to decide if the number of terms is sufficient.
 		              (setq qq (let (($taylordepth 16)) ($taylor qq x '$inf 16)))
 					  (setq qq (sratsimp ($first ($expand qq))))
-					  ;(mtell "qq = ~M ~%" qq)
 		              (setq qq (mrv-sign qq x))
-					 ; (mtell "qq = ~M ~%" qq)
 					  qq)
 				 (t nil)))
 		  

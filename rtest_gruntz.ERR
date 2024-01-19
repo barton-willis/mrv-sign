@@ -8,20 +8,6 @@ gruntz(%e^x*(%e^(1/x-%e^-x)-%e^(1/x)),x,inf) */
 /* Expected result: */
 -1;
 
-/* Problem 7 (line 63) */
-gruntz(exp(x)*(exp(1/x+exp(-x)+exp(-x^2))-exp(1/x-exp(-exp(x)))),x,inf);
-/* Erroneous Result?:
-gruntz(%e^x*(%e^(%e^-x^2+%e^-x+1/x)-%e^(1/x-%e^-%e^x)),x,inf) */ 
-/* Expected result: */
-1;
-
-/* Problem 15 (line 88) */
-gruntz((exp((x*exp(-x))/(exp(-x)+exp((-2*x^2)/(x+1))))-exp(x))/x,x,inf);
-/* Erroneous Result?:
-gruntz((%e^((x*%e^-x)/(%e^-((2*x^2)/(x+1))+%e^-x))-%e^x)/x,x,inf) */ 
-/* Expected result: */
--exp(2);
-
 /* Problem 16 (line 91) */
 gruntz((3^x+5^x)^(1/x),x,inf);
 /* Erroneous Result?:
@@ -38,14 +24,6 @@ gruntz(%e^(8*%e^((54*x^(49/45))/17+(21*x^(6/11))/8+5/(2*x^(5/7))+2/x^8))
 /* Expected result: */
 inf;
 
-/* Problem 20 (line 104) */
-gruntz((exp((4*x*exp(-x))/(1/exp(x)+1/exp((2*x^2)/(x+1))))-exp(x))/exp(x)^4,x,
-       inf);
-/* Erroneous Result?:
-gruntz(%e^-(4*x)*(%e^((4*x*%e^-x)/(%e^-((2*x^2)/(x+1))+%e^-x))-%e^x),x,inf) */ 
-/* Expected result: */
-1;
-
 /* Problem 23 (line 114) */
 gruntz(exp(log(log(x+exp(log(x)*log(log(x)))))
             /log(log(log(exp(x)+x+log(x))))),x,inf);
@@ -60,13 +38,6 @@ gruntz((erf(x-exp(-exp(x)))-erf(x))*exp(exp(x))*exp(x^2),x,inf);
 gruntz(%e^(%e^x+x^2)*(-erf(%e^-%e^x-x)-erf(x)),x,inf) */ 
 /* Expected result: */
 2/sqrt(%pi);
-
-/* Problem 29 (line 133) */
-gruntz(exp(exp(x))*(exp(sin(1/x+exp(-exp(x))))-exp(sin(1/x))),x,inf);
-/* Erroneous Result?:
-gruntz(%e^%e^x*(%e^sin(%e^-%e^x+1/x)-%e^sin(1/x)),x,inf) */ 
-/* Expected result: */
-1;
 
 /* Problem 30 (line 136) */
 gruntz(exp(x)*(gamma(x+exp(-x))-gamma(x)),x,inf);
