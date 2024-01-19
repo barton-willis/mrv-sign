@@ -21,6 +21,7 @@
 
 ;; rtest_gruntz failures:
 ;(7 8 16 17 20 21 24 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 81 82 83 84 85 86 87 89 90 91 95 101 102)
+;(7      17 20    24 29    31 32 33 34 35 36 37 38 39 40 41 42 43 44 81 82 83 84 85 86 87 89 90 91 95 101 102)
 (defvar *mrv-sign-failures* nil)
 
 ;; Do {neg, zero, pos} --> {-1,0,1}. For all other inputs, throw an error
@@ -116,7 +117,7 @@
 					  (when (null qq)
 					    (throw 'taylor-catch nil))
 					  ;; I'm not sure this always returns the leading order?
-					  (setq qq (sratsimp ($first ($expand qq))))
+					  (setq qq (resimplify ($first qq)))
 		              (setq qq (mrv-sign qq x))
 					  qq)
 				 (t (throw 'taylor-catch nil)))) ;shouldn't happen?
