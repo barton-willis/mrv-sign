@@ -108,7 +108,7 @@
 					  (setq qq (sratsimp ($first ($expand qq))))
 		              (setq qq (mrv-sign qq x))
 					  qq)
-				 (t nil)))
+				 (t (throw 'taylor-catch nil)))) ;shouldn't happen?
 		  
 		  (t 
 		   	;; Hope that csign can do it!
