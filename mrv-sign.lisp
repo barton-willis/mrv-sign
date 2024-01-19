@@ -21,22 +21,26 @@
 
 (defvar *mrv-sign-failures* nil)
 
-;; Do {neg, zero, pos} --> {-1,0,1}. For all other inputs, return nil
+;; Do {neg, zero, pos} --> {-1,0,1}. For all other inputs, throw an error
+;; to taylor-catch. Running the testsuite, neg is the most poplular input
+;; to this function.
 (defun mrv-sign-to-number (sgn)
 	(cond ((eq sgn '$neg) -1)
-		  ((eq sgn '$zero) 0)
 		  ((eq sgn '$pos) 1)
+		  ((eq sgn '$zero) 0)
 		  (t (throw 'taylor-catch nil)))) ; pn, pz, nz, pnz, complex, or imaginary.
 
 ;; Return the mrv-sign of an expression that is free of the variable x.
 ;; Unfortunately, the limit problem limit(ind*inf) makes its way to the gruntz 
 ;; code as gruntz(ind*x,x,inf). And that calls mrv-sign-constant on ind. So
-;; we trap for this case (and other extended reals) and return nil for its
-;; mrv sign.
+;; we trap for this case (and other extended reals) and throw an error to 
+;; taylor-catch.
+
+(defvar *jj* nil)
 (defun mrv-sign-constant (e)
 	(let ((sgn))
 	  (cond 
-	    ((member e extended-reals) (throw 'taylor-catch nil)) ;should not happen
+	    ((member e extended-reals) (throw 'taylor-catch nil)) 
 	    (t 		
 		  ;; The orginial mrv-sign code called radcan on e before calling 
 		  ;; sign, but I'm not sure the radcan is needed. Let's just call 
@@ -46,15 +50,17 @@
 		  (when (and *getsignl-asksign-ok* (eq sgn '$pnz))
 			 (setq sgn ($asksign e))
 			  ;; The gruntz code uses a super context, so we can make assumptions
-			  ;; that will be removed when the super context is killed.
+			  ;; that will be removed when the super context is killed. Possibly
+			  ;; these assumptions keep Maxima from asking redundant questions, but
+			  ;; I don't have an example that shows doing these assumptions makes
+			  ;; a difference.
 			  (cond ((eq sgn '$neg) (assume (ftake 'mlessp e 0)))
 			        ((eq sgn '$zero) (assume (ftake '$equal e 0)))
 			        ((eq sgn '$pos) (assume (ftake 'mlessp 0 e))))) 
-		  ;; When sgn isn't one of neg, zero, or pos, throw a taylor-catch error.
-		  ;; The gruntz code cannot proceed without knowing the sign.		 
-		  (if (member sgn (list '$neg '$zero '$pos)) 
-		        (mrv-sign-to-number sgn)  ;convert sgn to a numerical code.
-				(throw 'taylor-catch nil))))))
+		  ;; Map {neg, zero, pos} --> {-1,0,1}. For all other values,
+		  ;; throw an error to taylor-catch.
+		  (mrv-sign-to-number sgn)))))
+			
 
 ;; The notorious Bug #3054 
 ;;
@@ -64,7 +70,6 @@
 
 (defun mrv-sign-sum (e x)
 	(let ((ee (mapcar #'(lambda (q) (mrv-sign-helper q x)) (cdr e))))
-	;(mtell "ee = ~M ~%" (cons '(mlist) ee))
 	(cond 
 	    ;; unable to find the sign of one term, dispatch csign on e.
 		((some #'null ee)
@@ -74,13 +79,11 @@
 		 -2)
          ;; at least one term is 2 and all other terms are finite; return 2
 		((and (every #'(lambda (q) (<= -1 q)) ee) (member 2 ee :test #'eql))
-		 2) 	  
+		 2) 
 	    ;; every term of e is nonnegative, return 1 for postive & 2 for inf
 	    ((every #'(lambda (q) (>= q 0)) ee) (apply #'max ee))
 		;; every term is nonpositive, return -1 for negative & -2 for minf
 		((every #'(lambda (q) (>= 0 q)) ee) (apply #'min ee))
-		((and (every #'(lambda (q) (>= q -1)) ee) (member 2 ee :test #'eql))
-		 2)
 		(t (mrv-indeterminate-sum e x)))))
 
 ;; OK, once this function is polished, I should blend it with mrv-sign-sum. 
@@ -121,12 +124,21 @@
 	 ((some #'null ee) (mrv-sign-to-number ($csign e)))
      (t (max -2 (min 2 (reduce '* ee)))))))
 
+;; To allow the (slow) test
+;;   gruntz(%e^(8*%e^((54*x^(49/45))/17+(21*x^(6/11))/8+5/(2*x^(5/7))+2/x^8))/log(log(-log(4/(3*x^(5/14)))))^(7/6),x,inf);
+;; to complete, we need to examine the mrv sign of both X and 1/X, where 
+;; the input to mrv-sign-log is log(X).
 (defun mrv-sign-log (e x) ; e = log(X)
 	(let ((sgn (mrv-sign-helper (cadr e) x)))
       (cond 
 	    ((eql sgn 2) 2) ; log(inf) = inf	 
-		;; for all other cases, dispatch csign
-		(t (mrv-sign-to-number ($csign e))))))
+		((null sgn) (throw 'taylor-catch nil))
+		(t 
+		  ;; When the extended mrv sign of 1/X is 2, that means X = zeroa.
+		  ;; so mrvsign(log(X))= mrvsign(minf) = -2
+		  (setq sgn (mrv-sign-helper (div 1 (cadr e)) x))
+		  (if (eql sgn 2) -2) (mrv-sign-to-number ($csign e))))))
+		
 
 (defun mvr-sign-mexpt (e x) ; e = X^Y
   (let ((a (mrv-sign-helper (cadr e) x))
