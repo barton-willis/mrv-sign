@@ -39,7 +39,6 @@
 ;; we trap for this case (and other extended reals) and throw an error to 
 ;; taylor-catch.
 
-(defvar *jj* nil)
 (defun mrv-sign-constant (e)
 	(let ((sgn))
 	  (cond 
@@ -64,12 +63,6 @@
 		  ;; throw an error to taylor-catch.
 		  (mrv-sign-to-number sgn)))))
 			
-
-;; The notorious Bug #3054 
-;;
-;; limit(exp(exp(2*log(x**5 + x)*log(log(x)))) / exp(exp(10*log(x)*log(log(x)))), x, inf)
-;;
-;; sends some expressions to mrv-sign-sum that this code does not handle.
 
 (defun mrv-sign-sum (e x)
 	(let ((ee (mapcar #'(lambda (q) (mrv-sign-helper q x)) (cdr e))))
