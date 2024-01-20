@@ -313,7 +313,7 @@ limit(gamma(x), x, 3,'plus);
 2$
 
 limit(gamma(1/7 + 1/x), x, inf);
-gamma(1/7)$
+(-(6/7))!$
 
 limit(log(x^x)/log(gamma(x)), x, inf);
 1$
@@ -322,7 +322,7 @@ limit(log(gamma(gamma(x)))/exp(x), x, inf);
 inf$
 
 limit(1/log(atan(x)), x, inf);
--(1/(log(2)-log(%pi)))$
+ 1/log(%pi/2)$
 
 limit(1/acot(x), x, minf);
 minf$
@@ -340,7 +340,7 @@ block([ans],
    remove(n,integer),
    forget(n>0),
    ans);
-n/2$
+ (n+2)/2-1$
 
 limit(x - gamma(1/x), x, inf);
 %gamma$

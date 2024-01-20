@@ -22,31 +22,35 @@
 ;; rtest_gruntz failures:
 ;(7 8 16 17 20 21 24 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 81 82 83 84 85 86 87 89 90 91 95 101 102)
 ;(7      17 20    24 29    31 32 33 34 35 36 37 38 39 40 41 42 43 44 81 82 83 84 85 86 87 89 90 91 95 101 102)
+;(7 8 16 17 20 21 24 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 81 82 83 84 85 86 87 89 90 91 95 101 102)
+; rtest_limit_gruntz_failures: (requires fix to hayat to run to completion)
+;(          20    24 29       32 33 34 35          39 40 41 42 43 44             85 86          91    101 102)
+
 (defvar *mrv-sign-failures* nil)
 
-;; Do {neg, zero, pos} --> {-1,0,1}. For all other inputs, throw an error
-;; to taylor-catch. Running the testsuite, neg is the most poplular input
-;; to this function.
+;; Map {neg, zero, pos} --> {-1,0,1}. For all other inputs, throw an error
+;; to taylor-catch. Running the testsuite, $neg is the most poplular input
+;; to this function, so test for $neg first.
 (defun mrv-sign-to-number (sgn)
 	(cond ((eq sgn '$neg) -1)
 		  ((eq sgn '$pos) 1)
 		  ((eq sgn '$zero) 0)
-		  (t (throw 'taylor-catch nil)))) ; pn, pz, nz, pnz, complex, or imaginary.
+		  (t (throw 'taylor-catch nil)))) ; nil pn, pz, nz, pnz, complex, or imaginary.
 
 ;; Return the mrv-sign of an expression that is free of the variable x.
 ;; Unfortunately, the limit problem limit(ind*inf) makes its way to the gruntz 
 ;; code as gruntz(ind*x,x,inf). And that calls mrv-sign-constant on ind. So
 ;; we trap for this case (and other extended reals) and throw an error to 
-;; taylor-catch.
-
+;; taylor-catch for an input that is an extended real (minf,zerob,zeroa,ind,und,inf,
+;; or infinity).
 (defun mrv-sign-constant (e)
 	(let ((sgn))
 	  (cond 
 	    ((member e extended-reals) (throw 'taylor-catch nil)) 
 	    (t 		
 		  ;; The orginial mrv-sign code called radcan on e before calling 
-		  ;; sign, but I'm not sure the radcan is needed. Let's just call 
-		  ;; csign on e and skip the radcan.
+		  ;; sign, but running the testsuite reveals no case where radcan
+		  ;; is needed. So let's skip the radcan.
 		  (setq sgn ($csign e))
 		  ;; When sgn is pnz and *getsignl-asksign-ok* is true, do an asksign. 
 		  (when (and *getsignl-asksign-ok* (eq sgn '$pnz))
@@ -62,7 +66,6 @@
 		  ;; Map {neg, zero, pos} --> {-1,0,1}. For all other values,
 		  ;; throw an error to taylor-catch.
 		  (mrv-sign-to-number sgn)))))
-			
 
 (defun mrv-sign-sum (e x)
 	(let ((ee (mapcar #'(lambda (q) (mrv-sign-helper q x)) (cdr e))))
@@ -137,11 +140,10 @@
 		((null sgn) (throw 'taylor-catch nil))
 		(t 
 		  ;; When the extended mrv sign of 1/X is 2, that means X = zeroa.
-		  ;; so mrvsign(log(X))= mrvsign(minf) = -2
+		  ;; And mrvsign(log(zeroa))= mrvsign(minf) = -2
 		  (setq sgn (mrv-sign-helper (div 1 (cadr e)) x))
 		  (if (eql sgn 2) -2) (mrv-sign-to-number ($csign e))))))
 		
-
 (defun mvr-sign-mexpt (e x) ; e = X^Y
   (let ((a (mrv-sign-helper (cadr e) x))
         (b (mrv-sign-helper (caddr e) x)))
@@ -156,7 +158,8 @@
 	  ((and (eql a 2) (or (eql b -1) (eql b 0))) 1)
 	  ;; pos^{neg, zero, pos} = pos
 	  ((and (eql a 1) (or (eql b -1) (eql b 0) (eql b 1))) 1)
-	  ;; for all other cases, dispatch csign
+	  ;; We could push this analysis further, but for all other cases, 
+	  ;; let's dispatch csign
 	  (t (mrv-sign-to-number ($csign e))))))
 
 (defun atanp (e)
@@ -266,3 +269,19 @@
 				    (resimp-extra-simp (sratsimp exp)))) ;additional simplifications
 				  (limitinf exp newvar)) ;compute & return limit
 			($killcontext cx))))) ;kill context & forget all new facts.	 
+
+;; From hayat.lisp. This changes two calls to break to tay-error.
+(defun lim-times (lim1 lim2)
+  (let (lim)
+   (cond ((or (eq lim1 '$zero) (eq lim2 '$zero)) (setq lim '$zero))
+	 ((and (lim-infp lim1) (lim-infp lim2)) (setq lim '$inf))
+	 ((and (lim-zerop lim1) (lim-zerop lim2)) (setq lim '$pos))
+	 ((or (when (lim-finitep lim2) (rotatef lim1 lim2) 't)
+	      (lim-finitep lim1))
+	  (when (and (eq lim1 '$finite) (lim-infp lim1))
+	     (tay-error "Undefined finite*inf in lim-times" lim2))
+	  (setq lim (lim-abs lim2)))
+	 (t (tay-error "Undefined limit product in lim-times" (list (list 'mtimes) lim1 lim2))))
+   (if (or (lim-imagp lim1) (lim-imagp lim2))
+       (if (lim-infp lim) '$infinity '$im)
+      (if (and (lim-plusp lim1) (lim-plusp lim2)) lim (lim-minus lim)))))
