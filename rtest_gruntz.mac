@@ -1,10 +1,10 @@
 /*
-These tests are translated to Maxima from the SymPY tests. The orginal source is
+These tests are translated to Maxima from the SymPy tests. The orginal source is
 
  https://github.com/sympy/sympy/blob/master/sympy/series/tests/test_gruntz.py 
 
 Translation errors are, of course, possible, and all such errors are mine.
-I thank the SymPY developers for making this resource available. 
+I thank the SymPy developers for making this resource available. 
 
 Copyright (c) 2006-2023 SymPy Development Team
 
