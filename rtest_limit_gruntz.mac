@@ -1,5 +1,5 @@
 /*
-These tests are translated to Maxima from the SymPY tests. The orginal source is
+These tests are translated to Maxima from the SymPy tests. The orginal source is
 
  https://github.com/sympy/sympy/blob/master/sympy/series/tests/test_limit.py 
 
