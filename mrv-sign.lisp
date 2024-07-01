@@ -1,72 +1,56 @@
 (in-package :maxima)
+;; Given a Maxima expression e and a variable x, mrv-sign(e,x) returns the sign 
+;; of e in a neighborhood of inf (real infinity). The sign is encoded as -1 for 
+;; negative, 0 for zero, and 1 for positive. 
 
-;; Given a Maxima expression e and a variable x, return the sign of e in
-;; a neighborhood of infinity. The sign is encoded as -1 for negative, 0
-;; for zero, and 1 for positive. We'll say this encoding is the "mrv sign" 
-;; of an expression.
+;; Notice that for a sufficiently large number of compositions, log(log(...(log(x)))) 
+;; is positive in a neighborhood of infinity, but no matter how large we assume x 
+;; to be, sign(log(log(... (log(x))))) = pnz. So no, the function mrv-sign cannot 
+;; simply call sign.
 
-;; The gruntz code makes an assumption that x > *large-positive-number* before
+;; The Gruntz code makes an assumption that x > *large-positive-number* before
 ;; this code is called. This assumption is made in a new super context, so 
-;; it's OK for this code to make new assumptions, as the gruntz code eventually 
+;; it's OK for this code to make new assumptions, as the Gruntz code eventually 
 ;; kills the super context, deleting the new assumptions.
 
 ;; The function mrv-sign-helper extends the mrv sign of an expression to 
 ;; include the values of 2 for an expression that is not bounded above in a 
-;; neighborhood of infinity and -2 for one that is  not bounded below. For 
-;; example, the extended mrv sign of x --> log(x) is 2 and the extended
+;; neighborhood of infinity and -2 for one that is not bounded below. For 
+;; example, the extended mrv sign of x --> log(x) is 2, and the extended
 ;;; mrv sign of x --> -x is -2. 
 
-;; For debugging, the global *mrv-sign-failures* is a list of expressions that 
-;; mrv-sign was not able to do. 
-
-;; rtest_gruntz failures:
-;(7 8 16 17 20 21 24 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 81 82 83 84 85 86 87 89 90 91 95 101 102)
-;(7      17 20    24 29    31 32 33 34 35 36 37 38 39 40 41 42 43 44 81 82 83 84 85 86 87 89 90 91 95 101 102)
-;(7 8 16 17 20 21 24 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 81 82 83 84 85 86 87 89 90 91 95 101 102)
-; rtest_limit_gruntz_failures: (requires fix to hayat to run to completion)
-;(          20    24 29       32 33 34 35          39 40 41 42 43 44             85 86          91    101 102)
-
-(defvar *mrv-sign-failures* nil)
-
-;; Map {neg, zero, pos} --> {-1,0,1}. For all other inputs, throw an error
-;; to taylor-catch. Running the testsuite, $neg is the most poplular input
-;; to this function, so test for $neg first.
+;; Map {$neg, $zero, $pos} --> {-1, 0, 1}. For all other inputs, throw an error
+;; to taylor-catch. 
 (defun mrv-sign-to-number (sgn)
-	(cond ((eq sgn '$neg) -1)
-		  ((eq sgn '$pos) 1)
-		  ((eq sgn '$zero) 0)
-		  (t (throw 'taylor-catch nil)))) ; nil pn, pz, nz, pnz, complex, or imaginary.
+  (cond ((eq sgn '$neg) -1)
+        ((eq sgn '$zero) 0)
+        ((eq sgn '$pos) 1)
+        (t (throw 'taylor-catch nil)))) ; nil for pn, pz, nz, pnz, complex, or imaginary.
 
-;; Return the mrv-sign of an expression that is free of the variable x.
-;; Unfortunately, the limit problem limit(ind*inf) makes its way to the gruntz 
-;; code as gruntz(ind*x,x,inf). And that calls mrv-sign-constant on ind. So
-;; we trap for this case (and other extended reals) and throw an error to 
-;; taylor-catch for an input that is an extended real (minf,zerob,zeroa,ind,und,inf,
-;; or infinity).
+;; The function mrv-sign-constant returns the mrv-sign of an expression that is 
+;; free of the variable x. Unfortunately, the limit problem limit(ind*inf) makes 
+;; its way to the Gruntz code as gruntz(ind*x, x, inf). And utlimately that calls 
+;; mrv-sign-constant on ind. So, we trap for this case (and other extended reals) 
+;; and throw an error to taylor-catch for an input that is an extended real 
+;; (minf, zerob, zeroa, ind, und, inf, or infinity). Possibly, for the inputs
+;; minf, zerob, zeroa, and inf, mrv-sign-constant shouldn't throw to taylor-catch.
+
+;; When this code does an asksign, it would be OK to append this fact to the 
+;; fact database (the Gruntz code works in a new super context). Better, I think, 
+;; would be an option on asksign to append the fact.
+
+(defun mrv-sign (e x)
+	(let ((sgn (mrv-sign-helper e x)))
+	 (if (null sgn) (throw 'taylor-catch nil) (max -1 (min 1 sgn)))))
+
 (defun mrv-sign-constant (e)
-	(let ((sgn))
-	  (cond 
-	    ((member e extended-reals) (throw 'taylor-catch nil)) 
-	    (t 		
-		  ;; The orginial mrv-sign code called radcan on e before calling 
-		  ;; sign, but running the testsuite reveals no case where radcan
-		  ;; is needed. So let's skip the radcan.
-		  (setq sgn ($csign e))
-		  ;; When sgn is pnz and *getsignl-asksign-ok* is true, do an asksign. 
-		  (when (and *getsignl-asksign-ok* (eq sgn '$pnz))
-			 (setq sgn ($asksign e))
-			  ;; The gruntz code uses a super context, so we can make assumptions
-			  ;; that will be removed when the super context is killed. Possibly
-			  ;; these assumptions keep Maxima from asking redundant questions, but
-			  ;; I don't have an example that shows doing these assumptions makes
-			  ;; a difference.
-			  (cond ((eq sgn '$neg) (assume (ftake 'mlessp e 0)))
-			        ((eq sgn '$zero) (assume (ftake '$equal e 0)))
-			        ((eq sgn '$pos) (assume (ftake 'mlessp 0 e))))) 
-		  ;; Map {neg, zero, pos} --> {-1,0,1}. For all other values,
-		  ;; throw an error to taylor-catch.
-		  (mrv-sign-to-number sgn)))))
+   (if (member e extended-reals)
+      (throw 'taylor-catch nil)
+      (mrv-sign-to-number (if *getsignl-asksign-ok*
+                              ($asksign e)
+                              ($sign e)))))
 
+;; Return the mrv-sign of e, where e is a sum.
 (defun mrv-sign-sum (e x)
 	(let ((ee (mapcar #'(lambda (q) (mrv-sign-helper q x)) (cdr e))))
 	(cond 
@@ -83,45 +67,38 @@
 	    ((every #'(lambda (q) (>= q 0)) ee) (apply #'max ee))
 		;; every term is nonpositive, return -1 for negative & -2 for minf
 		((every #'(lambda (q) (>= 0 q)) ee) (apply #'min ee))
-		(t (mrv-indeterminate-sum e x)))))
+		(t (mrv-sign-indeterminate-sum e x)))))
 
-;; OK, once this function is polished, I should blend it with mrv-sign-sum. 
-;; Calling both mrv-sign-sum and mrv-indeterminate-sum is inefficient.
-(defun mrv-indeterminate-sum (e x)	
-    (let ((minf-term 0) (inf-term 0) (finite-term 0) (failed-term 0) (q) (qq) (ans))
-	(setq e (cdr e))
-	(dolist (q e)
-		(setq ans (mrv-sign-helper q x))
-		(cond ((eql -2 ans) (setq minf-term (add minf-term q)))
-		      ((eql 2 ans) (setq inf-term (add inf-term q)))
-			  ((eq nil ans) (setq failed-term (add failed-term q)))
-			  (t (setq finite-term (add finite-term q)))))
+(defun mrv-sign-indeterminate-sum (e x)	
+     (let ((minf-term nil) (other-term nil) (q) (qq) (ans))
+  	   (setq e (cdr e)) 
+	   (dolist (q e)
+	      (setq ans (mrv-sign-helper q x))
+		    (if (eql -2 ans) 
+		        (push q minf-term) 
+			    (push q other-term)))
 
-	(cond ((and (eql 0 failed-term) (not (eql 0 minf-term)) (not (eql inf-term 0)))
-	       (setq q ($gruntz (div inf-term (mul -1 minf-term)) x '$inf))
+	   (setq minf-term (fapply 'mplus minf-term))
+	   (setq other-term (fapply 'mplus other-term))
+
+ 	   (cond ((not (eql 0 minf-term))
+	       (setq q ($limit (sratsimp (div other-term (mul -1 minf-term))) x '$inf))
 		   (cond ((eq t (mgrp q 1)) 2)
+		         ((eql 0 q) -2)
 		         ((eq t (mgrp 1 q)) -2)
 				 ((eql q 1)
 				      ;; The call to sratsimp is needed for one rtest_gruntz test.
-					  (setq qq (sratsimp (sub (div inf-term (mul -1 minf-term)) 1)))
-					  ;; The function tlimit-taylor iterates on the taylor order
-					  ;; until the result is nonzero. The last argument (here 3) 
-					  ;; stops the after quadrupling the order three times. When
-					  ;; tlimit-taylor fails to find the leading term, throw an 
-					  ;; error to taylor-catch
-					  (setq qq (tlimit-taylor qq x '$inf 1 3)) ;16 1
-					  (when (null qq)
-					    (throw 'taylor-catch nil))
-					  ;; I'm not sure this always returns the leading order?
-					  (setq qq (resimplify ($first qq)))
-		              (setq qq (mrv-sign qq x))
-					  qq)
-				 (t (throw 'taylor-catch nil)))) ;shouldn't happen?
-		  
+					  (setq qq (sratsimp (sub (div other-term (mul -1 minf-term)) 1)))
+					  (setq qq (tlimit-taylor qq x '$inf 0 3))
+					  (if (null qq)
+					        (throw 'taylor-catch nil))
+		                    (mrv-sign ($ratdisrep qq) x))
+				 (t (throw 'taylor-catch nil))))
 		  (t 
-		   	;; Hope that csign can do it!
-	        (mrv-sign-to-number ($csign e))))))
+		    ;; Hope that csign can do it!
+	        (mrv-sign-to-number ($csign (fapply 'mplus e)))))))
 
+;; Return the mrv-sign of the expression e, where e is a product.
 (defun mrv-sign-product (e x)
   (let ((ee (mapcar #'(lambda (q) (mrv-sign-helper q x)) (cdr e))))
   (cond
@@ -129,22 +106,21 @@
 	 ((some #'null ee) (mrv-sign-to-number ($csign e)))
      (t (max -2 (min 2 (reduce '* ee)))))))
 
-;; To allow the (slow) test
+;; Return the mrv-sign of the expression e, where the operator of e is log. To 
+;; allow the (slow to finish) test
 ;;   gruntz(%e^(8*%e^((54*x^(49/45))/17+(21*x^(6/11))/8+5/(2*x^(5/7))+2/x^8))/log(log(-log(4/(3*x^(5/14)))))^(7/6),x,inf);
 ;; to complete, we need to examine the mrv sign of both X and 1/X, where 
 ;; the input to mrv-sign-log is log(X).
-(defun mrv-sign-log (e x) ; e = log(X)
-	(let ((sgn (mrv-sign-helper (cadr e) x)))
-      (cond 
-	    ((eql sgn 2) 2) ; log(inf) = inf	 
-		((null sgn) (throw 'taylor-catch nil))
-		(t 
-		  ;; When the extended mrv sign of 1/X is 2, that means X = zeroa.
-		  ;; And mrvsign(log(zeroa))= mrvsign(minf) = -2
-		  (setq sgn (mrv-sign-helper (div 1 (cadr e)) x))
-		  (if (eql sgn 2) -2) (mrv-sign-to-number ($csign e))))))
-		
-(defun mvr-sign-mexpt (e x) ; e = X^Y
+(defun mrv-sign-log (e x)
+	(cond ((eql 2 (mrv-sign-helper (cadr e) x)) 2) ;log(inf) = inf
+	      ((eql 2 (mrv-sign-helper (div 1 (cadr e)) x)) -2); log(zeroa) = minf
+		  (t (throw 'taylor-catch nil))))
+
+;; Return the mrv sign of the expression e, where e = X^Y. For the mrv sign
+;; of an expression to be zero, it needs to be zero in a neighborhood of zero.
+;; so if limit(X,x,inf) = 1/2 & limit(Y,x,inf) = inf, although limit(X^Y,x,inf)=0,
+;; the mrv sign of X^Y is not zero.
+(defun mrv-sign-mexpt (e x) ; e = X^Y
   (let ((a (mrv-sign-helper (cadr e) x))
         (b (mrv-sign-helper (caddr e) x)))
 	(cond 
@@ -152,26 +128,26 @@
 	  ((and (eql a 1) (eql b -2)) 1)
 	  ;; pos^inf = inf
 	  ((and (eql a 1) (eql b 2)) 2)
+	  ;; pos^{neg, pos} = pos
+	  ((and (eql a 1) (or (eql b -1) (eql b 1))) 1)
 	  ;; inf^pos = inf & inf^inf = inf
 	  ((and (eql a 2) (or (eql b 1) (eql b 2))) 2)
       ;; inf^{neg, zero} = pos
 	  ((and (eql a 2) (or (eql b -1) (eql b 0))) 1)
-	  ;; pos^{neg, zero, pos} = pos
-	  ((and (eql a 1) (or (eql b -1) (eql b 0) (eql b 1))) 1)
-	  ;; We could push this analysis further, but for all other cases, 
-	  ;; let's dispatch csign
-	  (t (mrv-sign-to-number ($csign e))))))
+	  ;; inf^minf = 1
+	  ((and (eql a 2) (eql b -2)) 1)
+      ;; zero^{pos,inf} = 0. But this case isn't tested by the testsuite!
+	  ((and (eql a 0) (or (eql b 1) (eql b 2))) 0)
+	  ;; For all other cases, let's dispatch csign or asksign
+	  (t 
+	    (mrv-sign-to-number 
+	      (if *getsignl-asksign-ok* ($asksign e) ($csign e)))))))
 
 (defun atanp (e)
 	(and (consp e) (eq '%atan (caar e))))
 
-(defun mvr-sign-atan (e x)
-  (mrv-sign-helper (cadr e) x))
-
-(defun sinhp (e)
-  (and (consp e) (or (eq '%sinh (caar e))  (eq '$sinh (caar e)))))
-
-(defun mvr-sign-sinh (e x)
+;; Return the mrv-sign of the expression e, where e = atan(X).
+(defun mrv-sign-atan (e x)
   (mrv-sign-helper (cadr e) x))
 
 (defun sinp (e)
@@ -179,109 +155,24 @@
 
 (defun mrv-sign-sin (e x)
 	(let ((sgn (mrv-sign-helper (div 1 (cadr e)) x)))
-		(cond ((eql sgn 2) 1)
-		      ((eql sgn -2) -1)
-			  (t nil))))
-
-(defun coshp (e)
-	(and (consp e) (eq '%cosh (caar e))))
-
-;; Wrong when e = cosh(X) and X isn't real?
-(defun mrv-sign-cosh (e x)
-  (let ((sgn (mrv-sign-helper (cadr e) x))) ;e = cosh(X)
-  (cond ((eql sgn -2) 2) ;cosh(-minf) = inf
-        ((eql sgn 2) 2) ;cosh(inf) = inf
-		(t 1)))) ; range(cosh) = [1,inf]
-
+		(cond ((eql sgn 2) 1) ;sin(zeroa) = 1
+		      ((eql sgn -2) -1) ;sin(zerob) = -1
+			  (t (throw 'taylor-catch nil)))))
 
 ;; Return the extended mrv sign of an expression. To do this, the code
 ;; examines the operator of the expression and dispatches the appropriate function.
-
-;; For debugging, build a list *missing-mrv-operator* of all operators that 
-;; mrv-sign-helper encounters but doesn't know how to handle. Currently 
-;; running the testsuite + the share testsuite does not reveal any missing 
-;; operators. If the list of operators grows, maybe I should put the 
-;; various sign functions in a hashtable and dispatch by lookup. It seems
-;; that mrv-sign-helper encounters a nounform sinh expression?
-(defvar *missing-mrv-operator* nil)
-
 (defun mrv-sign-helper (e x)
 	(cond ((freeof x e) (mrv-sign-constant e))
 	      ((eq e x) 2)
 	      ((mtimesp e) (mrv-sign-product e x))
 		  ((mplusp e) (mrv-sign-sum e x))
-		  ((mexptp e) (mvr-sign-mexpt e x))
+		  ((mexptp e) (mrv-sign-mexpt e x))
 		  ((mlogp e) (mrv-sign-log e x))
-		  ((atanp e) (mvr-sign-atan e x))
-		  ((coshp e) (mrv-sign-cosh e x))
-		  ((sinhp e) (mvr-sign-sinh e x))
+		  ((atanp e) (mrv-sign-atan e x))
 		  ((sinp e) (mrv-sign-sin e x))
+		  ;; As needed, uncomment and define the following functions:
+          ;; ((coshp e) (mrv-sign-cosh e x))
+          ;; ((sinhp e) (mrv-sign-sinh e x))
 		  (t 
-		    (when (consp e)
-				(push (caar e) *missing-mrv-operator*))
-		    (mrv-sign-to-number ($csign e)))))
+		    (throw 'taylor-catch nil))))
 
-(defun mrv-sign (e x)
-	(let ((sgn (mrv-sign-helper e x)))
-	  ;; For now, do a fake asksign on expressions the code cannot handle.
-	  (when (and (null sgn) (eq '$pnz ($csign e)))
-	    (push (ftake 'mlist e x sgn ($csign e)) *mrv-sign-failures*)
-	    (mtell "Enter sign (either -1,0,or 1) of ~M ~%" e)
-	    (setq sgn ($read )))
-     ;; When sgn is null, throw to taylor-catch; otherwise	 
-	 ;; map {-2,-1,0,1,2} --> {-1,-1,0,1,1}.
-	 (if (null sgn) (throw 'taylor-catch nil) (max -1 (min 1 sgn)))))
-
-;; The function gruntz1 standardizes the limit point to inf and the limit variable
-;; to a gensym. Since the limit point is possibly altered by this function, we
-;; need to make the appropriate assumptions on the limit variable. This is done
-;; in a supcontext.
-(defun gruntz1 (exp var val &rest rest)
-  (cond ((> (length rest) 1)
-	 (merror (intl:gettext "gruntz: too many arguments; expected just 3 or 4"))))
-  (let (($logexpand t) ; gruntz needs $logexpand T
-        (newvar (gensym "w"))
-	(dir (car rest)))
-	(putprop newvar t 'internal); keep var from appearing in questions to user	
-    (cond ((eq val '$inf)
-	   (setq exp (maxima-substitute newvar var exp)))
-	  ((eq val '$minf)
-	   (setq exp (maxima-substitute (m* -1 newvar) var exp)))
-	  ((eq val '$zeroa)
-	   (setq exp (maxima-substitute (m// 1 newvar) var exp)))
-	  ((eq val '$zerob)
-	   (setq exp (maxima-substitute (m// -1 newvar) var exp)))
-	  ((eq dir '$plus)
-	   (setq exp (maxima-substitute (m+ val (m// 1 newvar)) var exp)))
-	  ((eq dir '$minus)
-	   (setq exp (maxima-substitute (m+ val (m// -1 newvar)) var exp)))
-	  (t (merror (intl:gettext "gruntz: direction must be 'plus' or 'minus'; found: ~M") dir)))
-	  (let ((cx ($supcontext)))
-	   	    (unwind-protect
- 	         (progn
-				  (mfuncall '$assume (ftake 'mlessp *large-positive-number* newvar)) ; *large-positive-number* < newvar
-                  (mfuncall '$assume (ftake 'mlessp 0 'lim-epsilon)) ; 0 < lim-epsilon
-				  (mfuncall '$assume (ftake 'mlessp *large-positive-number* 'prin-inf)) ; *large-positive-number* < prin-inf
-				  (mfuncall '$activate cx) ;not sure this is needed, but OK	
-				  (setq exp (resimplify exp)) ;simplify in new context
-                  (setq exp (let ((var newvar)) 
-				    (declare (special var)) 
-				    (resimp-extra-simp (sratsimp exp)))) ;additional simplifications
-				  (limitinf exp newvar)) ;compute & return limit
-			($killcontext cx))))) ;kill context & forget all new facts.	 
-
-;; From hayat.lisp. This changes two calls to break to tay-error.
-(defun lim-times (lim1 lim2)
-  (let (lim)
-   (cond ((or (eq lim1 '$zero) (eq lim2 '$zero)) (setq lim '$zero))
-	 ((and (lim-infp lim1) (lim-infp lim2)) (setq lim '$inf))
-	 ((and (lim-zerop lim1) (lim-zerop lim2)) (setq lim '$pos))
-	 ((or (when (lim-finitep lim2) (rotatef lim1 lim2) 't)
-	      (lim-finitep lim1))
-	  (when (and (eq lim1 '$finite) (lim-infp lim1))
-	     (tay-error "Undefined finite*inf in lim-times" lim2))
-	  (setq lim (lim-abs lim2)))
-	 (t (tay-error "Undefined limit product in lim-times" (list (list 'mtimes) lim1 lim2))))
-   (if (or (lim-imagp lim1) (lim-imagp lim2))
-       (if (lim-infp lim) '$infinity '$im)
-      (if (and (lim-plusp lim1) (lim-plusp lim2)) lim (lim-minus lim)))))
