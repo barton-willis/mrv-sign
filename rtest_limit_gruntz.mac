@@ -1,5 +1,5 @@
 /*
-These tests are translated to Maxima from the SymPY tests. The orginal source is
+These tests are translated to Maxima from the SymPy tests. The orginal source is
 
  https://github.com/sympy/sympy/blob/master/sympy/series/tests/test_limit.py 
 
@@ -59,7 +59,7 @@ inf$
 limit(exp(exp(2*log(x^5 + x)*log(log(x)))) / exp(exp(10*log(x)*log(log(x)))), x, inf);
 inf$
 
-/*From limit's thesis pp. 122 to 123 */
+/*From Gruntz's thesis pp. 122 to 123 */
 
 /* 8.1 - 8.20 */
 limit(exp(x)*(exp(1/x - exp(-x)) - exp(1/x)), x, inf);
